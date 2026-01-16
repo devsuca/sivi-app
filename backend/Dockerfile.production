@@ -1,0 +1,54 @@
+# Dockerfile para Backend SIVI+360° - Produção
+FROM python:3.11-slim
+
+# Definir variáveis de ambiente
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instalar dependências do sistema
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        postgresql-client \
+        build-essential \
+        libpq-dev \
+        curl \
+        gettext \
+    && rm -rf /var/lib/apt/lists/*
+
+# Criar usuário não-root
+RUN groupadd -r sivis && useradd -r -g sivis sivis
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar requirements e instalar dependências Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Copiar código da aplicação
+COPY . .
+
+# Criar diretórios necessários
+RUN mkdir -p /var/www/sivis/static \
+    && mkdir -p /var/www/sivis/media \
+    && mkdir -p /var/log/sivis
+
+# Configurar permissões
+RUN chown -R sivis:sivis /app \
+    && chown -R sivis:sivis /var/www/sivis \
+    && chown -R sivis:sivis /var/log/sivis
+
+# Mudar para usuário não-root
+USER sivis
+
+# Expor porta
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health/ || exit 1
+
+# Comando padrão
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "config.wsgi_production:application"]
