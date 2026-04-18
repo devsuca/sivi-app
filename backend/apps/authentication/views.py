@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, AllowAny
 from drf_spectacular.utils import extend_schema
 from apps.atendimento.models import Atendimento
 from apps.atendimento.serializers import AtendimentoSerializer
@@ -11,7 +11,7 @@ class AtendimentoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser] # Only admin can manage atendimentos
 
 from rest_framework import generics, status, viewsets
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 import logging
 
@@ -33,6 +33,8 @@ class CrachaViewSet(viewsets.ModelViewSet):
 
 # Custom JWT view para aceitar email
 class CustomTokenObtainPairView(TokenObtainPairView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
     serializer_class = EmailTokenObtainSerializer
     
     def post(self, request, *args, **kwargs):
@@ -81,6 +83,9 @@ class MeView(APIView):
 
 # View para autenticação por email
 class EmailTokenObtainView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
     def post(self, request):
         serializer = EmailTokenObtainSerializer(data=request.data)
         if serializer.is_valid():

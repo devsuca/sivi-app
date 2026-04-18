@@ -214,7 +214,7 @@ export default function NotificacoesPage() {
         observacoes: data.observacoes || '',
         urgencia: data.urgencia,
         visitante_id: data.visitante_id ? parseInt(data.visitante_id) : undefined,
-        orgao_id: user?.orgao?.id
+        orgao_id: user?.orgao?.id !== undefined ? Number(user.orgao!.id) : undefined
       };
 
       const result = await notificationCrudService.create(createData);
